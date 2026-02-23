@@ -69,3 +69,5 @@ Search as you go
 All of us help each other
 
 Search for deepzoom github if you want to tile the image again (already did it in map_files)
+
+CarShowroom has sample react, .net and scraping code if anyone finds it useful
