@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>OSD Map - Fixed Canvas Highlight</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js"></script>
+    <style>
+        body { margin: 0; background: #0a1929; overflow: hidden; font-family: sans-serif; }
+        #osd-viewer { width: 100vw; height: 100vh; position: relative; }
+        #country-tooltip {
+            position: absolute; background: rgba(0,0,0,0.9); color: white;
+            padding: 8px 12px; border-radius: 4px; pointer-events: none;
+            display: none; border: 2px solid #667eea; z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="country-tooltip"></div>
+    <div id="osd-viewer"></div>
+
+    <script>
+        const tooltip = document.getElementById('country-tooltip');
+        let geoJsonData = null;
+        
+        // Adjust these to align your GeoJSON precisely with your specific map image
+        let borderOffsetX = -560; 
+        let borderOffsetY = 50; 
+        let currentCountry = null;
+
+        const viewer = OpenSeadragon({
+            id: "osd-viewer",
+            prefixUrl: "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/images/",
+            tileSources: "map.dzi",
+            showNavigationControl: false,
+            // Optimization for smooth overlay redrawing
+            animationTime: 0.5,
+            blendingTime: 0.1
+        });
+
+        // --- OVERLAY SETUP ---
+        // We attach the canvas to the viewer's canvas container manually 
+        // to prevent OSD from trying to scale the canvas element itself.
+        const overlay = document.createElement('canvas');
+        overlay.style.pointerEvents = 'none';
+        overlay.style.position = 'absolute';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        viewer.canvas.appendChild(overlay);
+
+        
+
+        // --- DATA LOGIC ---
+        function computeBBoxes() {
+            geoJsonData.features.forEach(f => {
+                let lats = [], lons = [];
+                const coords = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+                // Deep flatten to get all points for the BBox
+                coords.flat(Infinity).forEach((val, i) => {
+                    if (i % 2 === 0) lons.push(val); else lats.push(val);
+                });
+                f.bbox = [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)];
+            });
+        }
+
+        function getCountryFeature(lat, lon) {
+            if (!geoJsonData) return null;
+            for (let f of geoJsonData.features) {
+                const b = f.bbox;
+                if (lon < b[0] || lon > b[2] || lat < b[1] || lat > b[3]) continue;
+                
+                const polys = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+                const hit = polys.some(poly => {
+                    const ring = poly[0]; // Exterior ring
+                    let inside = false;
+                    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+                        const [xi, yi] = ring[i], [xj, yj] = ring[j];
+                        if (((yi > lat) !== (yj > lat)) && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi)) inside = !inside;
+                    }
+                    return inside;
+                });
+                if (hit) return f;
+            }
+            return null;
+        }
+
+        // --- INTERACTION ---
+        new OpenSeadragon.MouseTracker({
+            element: viewer.canvas,
+            moveHandler: function(e) {
+                if (!viewer.world.getItemAt(0)) return;
+                
+                // Inverse projection: Screen Pixel -> Viewport -> Image -> Lat/Lon
+                const vPt = viewer.viewport.pointFromPixel(e.position);
+                const iPt = viewer.viewport.viewportToImageCoordinates(vPt);
+                const imgW = viewer.world.getItemAt(0).getContentSize().x;
+                const imgH = viewer.world.getItemAt(0).getContentSize().y;
+
+                const lon = ((iPt.x - borderOffsetX) / imgW) * 360 - 180;
+                const mercN = (0.5 - (iPt.y - borderOffsetY) / imgH) * 2 * Math.PI;
+                const lat = (2 * Math.atan(Math.exp(mercN)) - Math.PI / 2) * 180 / Math.PI;
+
+                const feature = getCountryFeature(lat, lon);
+                if (feature !== currentCountry) {
+                    currentCountry = feature;
+                    if (feature) {
+                        tooltip.style.display = 'block';
+                        tooltip.innerText = feature.properties.NAME || feature.properties.name || "Unknown";
+                    } else {
+                        tooltip.style.display = 'none';
+                    }
+                }
+                tooltip.style.left = (e.position.x + 15) + "px";
+                tooltip.style.top = (e.position.y + 15) + "px";
+            }
+        });
+
+
+        // Load GeoJSON
+        fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
+            .then(r => r.json())
+            .then(data => { 
+                geoJsonData = data; 
+                computeBBoxes(); 
+            });
+    </script>
+</body>
+</html>
