@@ -1,0 +1,70 @@
+[
+  {
+    "ContainingType": "CarShowroom.Controllers.CarsController",
+    "Method": "GetAllCars",
+    "RelativePath": "Cars",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "limit",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CarShowroom.Controllers.MakesController",
+    "Method": "GetMakes",
+    "RelativePath": "Makes",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CarShowroom.Controllers.OnlineListingController",
+    "Method": "ScrapeURL",
+    "RelativePath": "OnlineListing",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "target",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "provider",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "CarShowroom.Controllers.OnlineListingController",
+    "Method": "SaveListing",
+    "RelativePath": "OnlineListing",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "listingDTO",
+        "Type": "CarShowroom.DTOs.AddListingOnlineDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]

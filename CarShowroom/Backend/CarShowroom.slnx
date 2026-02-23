@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../Tests/Tests.csproj" Id="bf2f2908-8768-4d7d-b4a7-c40f71aaeab5" />
+  <Project Path="CarShowroom.csproj" />
+</Solution>

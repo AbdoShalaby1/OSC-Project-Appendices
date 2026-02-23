@@ -1,0 +1,3 @@
+@CarShowroom_HostAddress = https://localhost:7128
+
+GET {{CarShowroom_HostAddress}}/api/cars?page=1&limit=5
